@@ -1,0 +1,27 @@
+ShootLib.addGun({
+    id:"m9",
+    name:"M9",
+    ammo:"ammohandgun",
+    accuracy:6,
+    recoil:4,
+    rate:10,
+    texture:{
+        name:"m9",
+        meta:0
+    },
+    shotType:ShotType.NORMAL,
+    buttonType:ButtonType.CLICK,
+    bullet:{
+        speed:10,
+        count:15,
+        damage:5
+    },
+    fov:{
+        level:2
+    },
+    sounds:{
+        shot:"m9/shot.ogg",
+        empty:"EmptyGun.mp3",
+        reload:"pm/reload.ogg"
+    }
+});
