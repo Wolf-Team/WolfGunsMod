@@ -9,3 +9,9 @@ Translation.addTranslation("PM",{
     ru:"ПМ",
     en:"PM"
 });
+
+//craft_table
+Translation.addTranslation("GunCraftTable",{
+    ru:"Оружейный верстак",
+    en:"GunCraftTable"
+});

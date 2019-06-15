@@ -1,47 +1,3 @@
-/*
-NIDE BUILD INFO:
-  dir: dev
-  target: main.js
-  files: 6
-*/
-
-
-
-// file: header.js
-
-/**
-* __        __     _  __  ____                   __  __           _ 
-* \ \      / /___ | |/ _|/ ___|_   _ _ __   ____|  \/  | ___   __| |
-*  \ \ /\ / // _ \| | |_| |  _| | | | '_ \ / ___| |\/| |/ _ \ / _` |
-*   \ V  V /| (_) | |  _| |_| | |_| | | | |\__ \| |  | | (_) | (_| |
-*    \_/\_/  \___/|_|_|  \____|\__,_|_| |_|____/|_|  |_|\___/ \__,_|
-*                                                                                      
-**/
-
-IMPORT("ShootLib", "ShootLib");
-
-var ShotType = ShootLib.ShotType;
-var ButtonType = ShootLib.ButtonType;
-
-ShootLib.init({
-    crosshairGUI:{
-        bitmap:{
-            coords:{
-                width:2048,
-                height:512
-            },
-            size:{
-                width:4000,
-                height:1000
-            }
-        }
-    }
-});
-
-
-
-// file: craft_table.js
-
 var CraftTableWindow = new UI.StandartWindow({
     standart: {
         header: {
@@ -73,7 +29,7 @@ var CraftTableWindow = new UI.StandartWindow({
         "slotInput14":{x:470, y:260, type:"slot"},
         "slotInput15":{x:530, y:260, type:"slot"},
 
-        "slotOutput":{x:600, y:170, type:"slot"}
+        "slotOutput":{x:600, y:170, type:"slot", isValid:function(){return false;}}
     }
 });
 IDRegistry.genBlockID("gun_craft_table");
@@ -103,7 +59,11 @@ TileEntity.registerPrototype(BlockID["gun_craft_table"], {
             var slot = this.container.getSlot("slotInput" + i);
             
             slots.push(slot);
-           
+            if(!this.data["slot" + i])
+                this.data["slot" + i] = {
+                    id:0, data:0, count:0
+                };
+                
             if(this.data["slot" + i].id != slot.id || this.data["slot" + i].data!= slot.data || this.data["slot" + i].count!= slot.count){
                 changed = true;
             }
@@ -115,9 +75,36 @@ TileEntity.registerPrototype(BlockID["gun_craft_table"], {
         }
         
         if(changed===true){
-            var a = GunRecipe.check(slots, this.container.getSlot("slotOutput"));
+            var a = GunRecipe.check(slots);
             if(a !== false)
-                alert(a.result)
+                this.container.setSlot("slotOutput", ItemID[a.result], 1, 0)
+            else
+                this.container.clearSlot("slotOutput") 
+        }
+        
+        if(!this.data["slotOut"])
+            this.data["slotOut"] = { id:0, data:0, count:0 };
+        
+        var slot = this.container.getSlot("slotOutput");
+        if(this.data["slotOut"].id != slot.id ||
+           this.data["slotOut"].data!= slot.data ||
+           this.data["slotOut"].count!= slot.count){
+            if(slot.id == 0){
+                 for(var i = 0; i < 16; i++){
+                    var slot = this.container.getSlot("slotInput" + i);
+                    if(slot.count > 0){
+                        slot.count--;
+                        if(slot.count == 0)
+                            slot.data = slot.id = slot.count;
+                        
+                    }
+                 }
+            }
+            this.data["slotOut"] = {
+                id:slot.id,
+                data:slot.data,
+                count:slot.count
+            }
         }
     }
 });
@@ -133,7 +120,7 @@ var GunRecipe = {
       });
     },
     
-    check:function(input, output){
+    check:function(input){
         for(var i in this.recipes){
             var recipe = this.recipes[i];
             var check = true;
@@ -157,115 +144,3 @@ var GunRecipe = {
         return false;
     }
 }
-
-GunRecipe.add("Test", ["abbb", "bbbb", "bbbb"], {a:{id:1}});
-Callback.addCallback("ItemUse",function(){
-    var slots = [];
-    
-    for(var i = 0; i < 16; i++){
-        slots.push({id:0, data:0}); 
-    }
-    
-    var a = GunRecipe.check(slots);
-    alert(a.result);
-})
-
-
-
-// file: guns/pm.js
-
-ShootLib.addGun({
-    id:"pm",
-    name:"PM",
-    ammo:"ammohandgun",
-    accuracy:6,
-    recoil:4,
-    rate:10,
-    texture:{
-        name:"pm",
-        meta:0
-    },
-    shotType:ShotType.NORMAL,
-    buttonType:ButtonType.CLICK,
-    bullet:{
-        speed:10,
-        count:8,
-        damage:5
-    },
-    fov:{
-        level:2
-    },
-    sounds:{
-        shot:"pm/shot.ogg",
-        empty:"EmptyGun.mp3",
-        reload:"pm/reload.ogg"
-    }
-});
-
-
-
-
-// file: guns/m9.js
-
-ShootLib.addGun({
-    id:"m9",
-    name:"M9",
-    ammo:"ammohandgun",
-    accuracy:6,
-    recoil:4,
-    rate:10,
-    texture:{
-        name:"m9",
-        meta:0
-    },
-    shotType:ShotType.NORMAL,
-    buttonType:ButtonType.CLICK,
-    bullet:{
-        speed:10,
-        count:15,
-        damage:5
-    },
-    fov:{
-        level:2
-    },
-    sounds:{
-        shot:"m9/shot.ogg",
-        empty:"EmptyGun.mp3",
-        reload:"pm/reload.ogg"
-    }
-});
-
-
-
-// file: ammos.js
-
-ShootLib.addAmmos([{
-    id:"ammohandgun",
-    name:"Handgun Ammo",
-    texture:{
-        name:"ammohandgun",
-        meta:0
-    }
-}]);
-
-
-
-// file: translate.js
-
-//ammos.js
-Translation.addTranslation("Handgun Ammo",{
-    ru:"Патроны к пистолету",
-    en:"Handgun Ammo"
-});
-
-//guns/pm.js
-Translation.addTranslation("PM",{
-    ru:"ПМ",
-    en:"PM"
-});
-
-//craft_table
-Translation.addTranslation("GunCraftTable",{
-    ru:"Оружейный верстак",
-    en:"GunCraftTable"
-});

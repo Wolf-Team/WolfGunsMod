@@ -1,5 +1,8 @@
 header.js
 
+craft_table.js
+
+guns/components.js
 guns/pm.js
 guns/m9.js
 
