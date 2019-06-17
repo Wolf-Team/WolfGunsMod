@@ -51,61 +51,70 @@ TileEntity.registerPrototype(BlockID["gun_craft_table"], {
         return CraftTableWindow;
     },
     tick:function(){
+        if(!this.data["slotOut"])
+            this.data["slotOut"] = { id:0, data:0, count:0 };
+        
         var i = 0;
-        var slots = [];
+        var slots = [[],[],[],[]];
         var changed = false;
         
-        for(var i = 0; i < 16; i++){
-            var slot = this.container.getSlot("slotInput" + i);
-            
-            slots.push(slot);
-            if(!this.data["slot" + i])
-                this.data["slot" + i] = {
-                    id:0, data:0, count:0
-                };
+        for(var i = 0; i < 4; i++){
+            for(var ii = 0; ii < 4; ii++){
+                var index = i * 4 + ii;
+                var slot = this.container.getSlot("slotInput" + index);
                 
-            if(this.data["slot" + i].id != slot.id || this.data["slot" + i].data!= slot.data || this.data["slot" + i].count!= slot.count){
-                changed = true;
-            }
-            this.data["slot" + i] = {
-                id:slot.id,
-                data:slot.data,
-                count:slot.count
-            }
+                slots[i].push(slot);
+                if(!this.data["slot" + index])
+                    this.data["slot" + index] = {
+                        id:0, data:0, count:0
+                    };
+                    
+                if(this.data["slot" + index].id != slot.id ||
+                    this.data["slot" + index].data!= slot.data ||
+                this.data["slot" + index].count!= slot.count){
+                    changed = true;
+                }
+                this.data["slot" + index] = {
+                    id:slot.id,
+                    data:slot.data,
+                    count:slot.count
+                }
+            }   
         }
+        
+        var slot = this.container.getSlot("slotOutput");
         
         if(changed===true){
             var a = GunRecipe.check(slots);
             if(a !== false)
                 this.container.setSlot("slotOutput", ItemID[a.result], 1, 0)
             else
-                this.container.clearSlot("slotOutput") 
+                this.container.clearSlot("slotOutput");
+            
+        }else{
+            if((this.data["slotOut"].id != slot.id ||
+               this.data["slotOut"].data!= slot.data ||
+               this.data["slotOut"].count!= slot.count)){
+                
+                if(slot.id == 0){
+                     for(var i = 0; i < 16; i++){
+                        var slot = this.container.getSlot("slotInput" + i);
+                        if(slot.count > 0){
+                            slot.count--;
+                            if(slot.count == 0)
+                                slot.data = slot.id = slot.count;
+                            
+                        }
+                     }
+                }
+            }
         }
         
-        if(!this.data["slotOut"])
-            this.data["slotOut"] = { id:0, data:0, count:0 };
-        
-        var slot = this.container.getSlot("slotOutput");
-        if(this.data["slotOut"].id != slot.id ||
-           this.data["slotOut"].data!= slot.data ||
-           this.data["slotOut"].count!= slot.count){
-            if(slot.id == 0){
-                 for(var i = 0; i < 16; i++){
-                    var slot = this.container.getSlot("slotInput" + i);
-                    if(slot.count > 0){
-                        slot.count--;
-                        if(slot.count == 0)
-                            slot.data = slot.id = slot.count;
-                        
-                    }
-                 }
-            }
-            this.data["slotOut"] = {
+        this.data["slotOut"] = {
                 id:slot.id,
                 data:slot.data,
                 count:slot.count
             }
-        }
     }
 });
 
@@ -113,34 +122,81 @@ var GunRecipe = {
     recipes:[],
     
     add:function(gun_id, recipe, ingridients){
-      this.recipes.push({
-        recipe:recipe,
-        ingridients:ingridients,
-        result:gun_id
-      });
+        for(var i = 1; i < recipe.length; i++){
+            if(recipe[0].length != recipe[i].length)
+                throw "Строки разной длинны";
+        }
+        
+        this.recipes.push({
+            recipe:recipe,
+            ingridients:ingridients,
+            result:gun_id
+        });
     },
     
     check:function(input){
         for(var i in this.recipes){
             var recipe = this.recipes[i];
-            var check = true;
-            var str_recipe = recipe.recipe.join("").split("");
+            if(!recipe.ingridients.hasOwnProperty(" "))
+                recipe.ingridients[" "] = {id:0, data:0};
             
-            for(var ii = 0; ii < input.length; ii++){
-                var ingridient = recipe.ingridients.hasOwnProperty(str_recipe[ii])?recipe.ingridients[str_recipe[ii]]:{id:0, data:0};
-                
-                if(!ingridient.data) ingridient.data = -1;
-                
-                if(input[ii].id != ingridient.id || (ingridient.data != -1 && input[ii].data != ingridient.data)){
-                   check = false;
+            recipe.ingridients["air"] = {id:0, data:0};
+            
+            var state = 0;
+            
+            var _i = 0, _ii = 0;
+            
+            for(var i = 0; i < 4; i++){//lines
+                for(var ii = 0; ii < 4; ii++){//columns
+                    if(state == 1){
+                         var ing = recipe.recipe[i - _i];
+                         if(ing)
+                             ing = ing[ii - _ii];
+                         
+                         if(!ing)
+                             ing = "air";
+                        
+                         if(input[i][ii].id != recipe.ingridients[ing].id){
+                            if(recipe.ingridients[recipe.recipe[0][0]].id == 0)
+                                state = 0;
+                            else
+                                state = 2;
+                         }
+                         
+                    }
+                    
+                    if(state == 0){
+                        if(i < (5 - recipe.recipe.length) && ii < (5 - recipe.recipe[0].length)){
+                            var ing = recipe.recipe[0][0];
+                            if(input[i][ii].id == recipe.ingridients[ing].id){
+                                _i = i;
+                                _ii = ii;
+                                state = 1;
+                            }
+                        }else{
+                            if(input[i][ii].id != 0)
+                                state = 2;
+                        }
+                    }
                 }
-                
             }
             
-            if(check)
+            if(state == 1){
                 return recipe;
+            }else{
+                continue;
+            }
         }
         
         return false;
     }
 }
+
+
+Callback.addCallback("PostLoaded", function(){
+    Recipes.addShaped({id: BlockID["gun_craft_table"], count: 1, data: 0}, [
+        "sis",
+        "ibi",
+        "sis"
+    ], ['s', 287, 0,'i', 265, 0, 'b', 42, 0]);
+});

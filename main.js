@@ -2,7 +2,7 @@
 NIDE BUILD INFO:
   dir: dev
   target: main.js
-  files: 6
+  files: 7
 */
 
 
@@ -73,7 +73,7 @@ var CraftTableWindow = new UI.StandartWindow({
         "slotInput14":{x:470, y:260, type:"slot"},
         "slotInput15":{x:530, y:260, type:"slot"},
 
-        "slotOutput":{x:600, y:170, type:"slot"}
+        "slotOutput":{x:600, y:170, type:"slot", isValid:function(){return false;}}
     }
 });
 IDRegistry.genBlockID("gun_craft_table");
@@ -96,28 +96,64 @@ TileEntity.registerPrototype(BlockID["gun_craft_table"], {
     },
     tick:function(){
         var i = 0;
-        var slots = [];
+        var slots = [[],[],[],[]];
         var changed = false;
         
-        for(var i = 0; i < 16; i++){
-            var slot = this.container.getSlot("slotInput" + i);
-            
-            slots.push(slot);
-           
-            if(this.data["slot" + i].id != slot.id || this.data["slot" + i].data!= slot.data || this.data["slot" + i].count!= slot.count){
-                changed = true;
+        for(var i = 0; i < 4; i++){
+            for(var ii = 0; ii < 4; ii++){
+                var index = i * 4 + ii;
+                var slot = this.container.getSlot("slotInput" + index);
+                
+                slots[i].push(slot);
+                if(!this.data["slot" + index])
+                    this.data["slot" + index] = {
+                        id:0, data:0, count:0
+                    };
+                    
+                if(this.data["slot" + index].id != slot.id ||
+                    this.data["slot" + index].data!= slot.data ||
+                this.data["slot" + index].count!= slot.count){
+                    changed = true;
+                }
+                this.data["slot" + index] = {
+                    id:slot.id,
+                    data:slot.data,
+                    count:slot.count
+                }
+            }   
+        }
+        
+        if(changed===true){
+            var a = GunRecipe.check(slots);
+            if(a !== false)
+                this.container.setSlot("slotOutput", ItemID[a.result], 1, 0)
+            else
+                this.container.clearSlot("slotOutput") 
+        }
+        
+        if(!this.data["slotOut"])
+            this.data["slotOut"] = { id:0, data:0, count:0 };
+        
+        var slot = this.container.getSlot("slotOutput");
+        if(this.data["slotOut"].id != slot.id ||
+           this.data["slotOut"].data!= slot.data ||
+           this.data["slotOut"].count!= slot.count){
+            if(slot.id == 0){
+                 for(var i = 0; i < 16; i++){
+                    var slot = this.container.getSlot("slotInput" + i);
+                    if(slot.count > 0){
+                        slot.count--;
+                        if(slot.count == 0)
+                            slot.data = slot.id = slot.count;
+                        
+                    }
+                 }
             }
-            this.data["slot" + i] = {
+            this.data["slotOut"] = {
                 id:slot.id,
                 data:slot.data,
                 count:slot.count
             }
-        }
-        
-        if(changed===true){
-            var a = GunRecipe.check(slots, this.container.getSlot("slotOutput"));
-            if(a !== false)
-                alert(a.result)
         }
     }
 });
@@ -133,11 +169,72 @@ var GunRecipe = {
       });
     },
     
-    check:function(input, output){
+    check:function(input){
         for(var i in this.recipes){
             var recipe = this.recipes[i];
+            if(!recipe.ingridients.hasOwnProperty(" "))
+                recipe.ingridients[" "] = {id:0, data:0};
+            
+            var state = 0;
+            
+            var _i = 0, _ii = 0;
+            
+            for(var i = 0; i < 4; i++){//lines
+                for(var ii = 0; ii < 4; ii++){//columns
+                    if(i < (5 - recipe.recipe.length) && ii < (5 - recipe.recipe[0].length)){
+                        if(state == 0){
+                            _i = i;
+                            _ii = ii;
+                        }
+                        
+                        
+                        var ing = recipe.recipe[i - _i];
+                        if(ing)
+                            ing = recipe.ingridients[ing[ii - _ii]]
+                        else
+                            ing = {id:0, data:0}
+                        
+                        if(input[i][ii].id == ing.id && state == 0){
+                            state = 1;
+                            alert("State");
+                            alert([i,ii]);
+                        }else if(input[i][ii].id == ing.id && state == 1){
+                            
+                        }else if(input[i][ii].id != 0 && state == 0){
+                            state = 2;
+                        }
+                    }
+                }
+            }
+            
+            
+            //if(check)
+                alert("state:"+state);
+            
+            return false;
+            switch(state){
+                case 2:
+                    return false;
+                break;
+            }
+            
             var check = true;
-            var str_recipe = recipe.recipe.join("").split("");
+           
+            var _i = _ii = -1;
+            
+            for(var i = 0; i < (5 - recipe.recipe.length); i++){//lines input
+                for(var ii = 0; ii < (5 - recipe.recipe[0].length); ii++){//columns input
+                    var input_line = input[i];
+                            
+                    var ingr = recipe.recipe[0][0];
+                    if(input_line[ii].id == recipe.ingridients[ingr].id){
+                        _i = i; _ii = ii;
+                        break;
+                    } 
+                }
+            }
+            
+            return false;
             
             for(var ii = 0; ii < input.length; ii++){
                 var ingridient = recipe.ingridients.hasOwnProperty(str_recipe[ii])?recipe.ingridients[str_recipe[ii]]:{id:0, data:0};
@@ -158,17 +255,13 @@ var GunRecipe = {
     }
 }
 
-GunRecipe.add("Test", ["abbb", "bbbb", "bbbb"], {a:{id:1}});
-Callback.addCallback("ItemUse",function(){
-    var slots = [];
-    
-    for(var i = 0; i < 16; i++){
-        slots.push({id:0, data:0}); 
-    }
-    
-    var a = GunRecipe.check(slots);
-    alert(a.result);
-})
+
+
+// file: guns/components.js
+
+IDRegistry.genItemID("pistol_base");
+Item.createItem("pistol_base", "Pistol Base", {name:"pistol_base"}, {stack: 16})
+GunRecipe.add("pistol_base", ["iii", "  i"], {i:{id:265}});
 
 
 
@@ -235,6 +328,8 @@ ShootLib.addGun({
     }
 });
 
+GunRecipe.add("m9", ["i", "p"], {i:{id:265}, "p":{id:ItemID["pistol_base"]}});
+
 
 
 // file: ammos.js
@@ -247,6 +342,7 @@ ShootLib.addAmmos([{
         meta:0
     }
 }]);
+GunRecipe.add("ammohandgun", ["i", "i"], {i:{id:265}});
 
 
 
@@ -262,6 +358,17 @@ Translation.addTranslation("Handgun Ammo",{
 Translation.addTranslation("PM",{
     ru:"ПМ",
     en:"PM"
+});
+//guns/m9.js
+Translation.addTranslation("M9",{
+    ru:"М9",
+    en:"M9"
+});
+
+//craft_table
+Translation.addTranslation("Pistol Base",{
+    ru:"Основа для пистолета",
+    en:"Pistol Base"
 });
 
 //craft_table

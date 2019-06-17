@@ -4,10 +4,20 @@ Translation.addTranslation("Handgun Ammo",{
     en:"Handgun Ammo"
 });
 
-//guns/pm.js
+//guns
 Translation.addTranslation("PM",{
     ru:"ПМ",
     en:"PM"
+});
+Translation.addTranslation("Desert Eagle",{
+    ru:"Степной Орёл",
+    en:"Desert Eagle"
+});
+
+//guns/components
+Translation.addTranslation("Pistol Base",{
+    ru:"Основа для пистолета",
+    en:"Pistol Base"
 });
 
 //craft_table

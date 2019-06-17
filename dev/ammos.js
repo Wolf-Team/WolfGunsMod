@@ -6,3 +6,4 @@ ShootLib.addAmmos([{
         meta:0
     }
 }]);
+GunRecipe.add("ammohandgun", ["i", "i"], {i:{id:265}});

@@ -23,5 +23,11 @@ ShootLib.addGun({
         shot:"m9/shot.ogg",
         empty:"EmptyGun.mp3",
         reload:"pm/reload.ogg"
-    }
+    },
+    randomDrop:[{
+        id:"pm",
+        chance:1
+    }]
 });
+
+GunRecipe.add("m9", ["i", "p"], {i:{id:265}, "p":{id:ItemID["pistol_base"]}});

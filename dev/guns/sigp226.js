@@ -1,28 +1,30 @@
+
 ShootLib.addGun({
-    id:"pm",
-    name:"PM",
+    id:"sigp226",
+    name:"SIGP226",
     ammo:"ammohandgun",
     accuracy:6,
-    recoil:4,
-    rate:10,
+    recoil:3,
+    rate:1,
     texture:{
-        name:"pm",
+        name:"sigp226",
         meta:0
     },
     shotType:ShotType.NORMAL,
     buttonType:ButtonType.CLICK,
     bullet:{
         speed:10,
-        count:8,
-        damage:5
+        count:10,
+        damage:6
     },
     fov:{
         level:2
     },
     sounds:{
-        shot:"pm/shot.ogg",
+        shot:"sigp/shot.ogg",
         empty:"EmptyGun.mp3",
-        reload:"pm/reload.ogg"
+        reload:"deserteagle/reload.ogg"
     }
 });
-GunRecipe.add("pm", ["ip"], {i:{id:265}, "p":{id:ItemID["pistol_base"]}});
+
+GunRecipe.add("sigp226", ["pi"], {i:{id:265}, "p":{id:ItemID["pistol_base"]}});

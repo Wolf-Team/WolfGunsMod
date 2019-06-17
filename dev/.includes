@@ -5,6 +5,8 @@ craft_table.js
 guns/components.js
 guns/pm.js
 guns/m9.js
+guns/deserteagle.js
+guns/sigp226.js
 
 ammos.js
 translate.js
